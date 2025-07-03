@@ -1,8 +1,8 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import Incomes from '../pages/IncomesPage.vue'
-import Orders from '../pages/OrdersPage.vue'
-import Sales from '../pages/SalesPage.vue'
-import Stocks from '../pages/StocksPage.vue'
+import Incomes from '../components/pages/IncomesPage.vue'
+import Orders from '../components/pages/OrdersPage.vue'
+import Sales from '../components/pages/SalesPage.vue'
+import Stocks from '../components/pages/StocksPage.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
