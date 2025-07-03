@@ -1,13 +1,23 @@
 <template>
-  <nav>
-    <router-link to="/incomes">Incomes</router-link>
-    <router-link to="/orders">Orders</router-link>
-    <router-link to="/sales">Sales</router-link>
-    <router-link to="/stocks">Stocks</router-link>
-  </nav>
-  <router-view />
+  <div class="app-container">
+    <NavMenu />
+    <router-view class="router-view" />
+  </div>
 </template>
 
+<script setup lang="ts">
+import NavMenu from './components/NavMenu.vue'
+</script>
+
 <style>
-/* Общие стили для навигации и приложения */
+.app-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.router-view {
+  flex: 1;
+  padding: 1rem;
+}
 </style>
