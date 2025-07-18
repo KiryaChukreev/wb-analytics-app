@@ -7,7 +7,7 @@
         inputId="dateRange"
         selectionMode="range"
         :manualInput="false"
-        dateFormat="yy-MM-dd"
+        dateFormat="y-MM-dd"
         showIcon
         :maxDate="maxDate"
         @update:modelValue="handleDateChange"
@@ -33,14 +33,14 @@ import { debounce } from 'lodash-es'
 const salesStore = useSalesStore()
 const maxDate = ref(new Date())
 const dateRange = ref<Date[]>([])
-const formatDate = (date: Date) => format(date, 'yyyy-MM-dd')
+const formatDate = (date: Date) => format(date, 'y-MM-dd')
 
 const handleDateChange = debounce(() => {
   if (dateRange.value?.length === 2) {
-    if (dateRange.value[0] > dateRange.value[1]) {
-      console.error('Введите некорректный диапазон!')
-      return
-    }
+    // if (dateRange.value[0] > dateRange.value[1]) {
+    //   console.error('Введите корректный диапазон!')
+    //   return
+    // }
     salesStore.setFilters({
       dateFrom: formatDate(dateRange.value[0]),
       dateTo: formatDate(dateRange.value[1]),

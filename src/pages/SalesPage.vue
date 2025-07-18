@@ -1,12 +1,12 @@
 <template>
   <div>
-    <DataTable />
+    <SalesTable />
   </div>
   <div><DataRangeFilter /></div>
 </template>
 
 <script setup lang="ts">
-import DataTable from '@/components/table/DataTable.vue'
+import SalesTable from '@/components/table/SalesTable.vue'
 import DataRangeFilter from '@/components/table/TableFilters/DateRangeFilter.vue'
 </script>
 

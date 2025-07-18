@@ -46,7 +46,7 @@ export type DateRangeType = [Date, Date] | null
 
 export interface Filters {
   dateFrom?: string | null
-  dateTo?: string | null
+  dateTo?: strin | null
   columnFilters: Record<string, string>
 }
 

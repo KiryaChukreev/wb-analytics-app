@@ -38,6 +38,10 @@ export const useSalesStore = defineStore('sales', {
           this.error = 'Некорректный диапазон дат'
           return
         }
+        if (!this.filters.dateFrom || !this.filters.dateTo) {
+          this.error = 'Необходимо указать обе даты'
+          return
+        }
         const response = await fetchSales(params)
 
         this.pagination.totalItems = response.total
@@ -52,8 +56,8 @@ export const useSalesStore = defineStore('sales', {
     },
 
     setFilters({ dateFrom, dateTo }: { dateFrom?: string | null; dateTo?: string | null }) {
-      this.filters.dateFrom = dateFrom ?? null
-      this.filters.dateTo = dateTo ?? null
+      this.filters.dateFrom = dateFrom
+      this.filters.dateTo = dateTo
       this.fetchData()
     },
 
