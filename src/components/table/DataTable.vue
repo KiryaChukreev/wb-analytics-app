@@ -1,159 +1,86 @@
 <template>
   <div class="card">
     <DataTable
-      :value="orders"
-      :paginator="true"
-      :rows="10"
-      paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
-      :rowsPerPageOptions="[5, 10, 25, 50]"
-      currentPageReportTemplate="Showing {first} to {last} of {totalRecords} entries"
+      :value="sales"
+      :rows="pagination.limit"
+      :totalRecords="pagination.totalItems"
       :loading="loading"
-      :filters="filters"
-      filterDisplay="menu"
+      paginator
+      :rowsPerPageOptions="[5, 10, 20, 50]"
+      @rows-per-page-change="onLimitChange"
+      paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink RowsPerPageDropdown"
+      currentPageReportTemplate="Показано {first} - {last} из {totalRecords}"
+      @page="onPageChange"
     >
       <template #header>
-        <div class="flex justify-content-between">
-          <h3>Таблица заказов</h3>
-          <span class="p-input-icon-left">
-            <i class="pi pi-search" />
-            <InputText v-model="filters['global'].value" placeholder="Global Search" />
-          </span>
+        <div>
+          <h3>{{ title }}</h3>
+          <Button icon="pi pi-refresh" @click="refreshData" />
         </div>
       </template>
 
-      <Column field="date" header="Date" sortable>
-        <template #body="{ data }">
-          {{ formatDate(data.date) }}
-        </template>
-      </Column>
-      <Column field="lastChangeDate" header="Last Change Date" sortable>
-        <template #body="{ data }">
-          {{ formatDate(data.lastChangeDate) }}
-        </template>
-      </Column>
       <Column
-        field="supplierArticle"
-        header="Supplier Article"
-        sortable
-        filterField="supplierArticle"
-        :showFilterMenu="false"
+        v-for="col in columns"
+        :key="col.field"
+        :field="col.field"
+        :header="col.header"
+        :sortable="col.sortable"
+        :filterField="col.field"
+        :showFilterMenu="col.filterable"
       >
-        <template #filter="{ filterModel, filterCallback }">
+        <template #filter="{ filterModel, filterCallback }" v-if="col.filterable">
           <InputText
             v-model="filterModel.value"
             type="text"
             @input="filterCallback()"
-            class="p-column-filter"
-            placeholder="Search by article"
+            :placeholder="`Поиск по ${col.header.toLowerCase()}`"
           />
         </template>
       </Column>
-      <Column field="techSize" header="Tech Size" sortable></Column>
-      <Column field="barcode" header="Barcode" sortable></Column>
-      <Column field="totalPrice" header="Total Price" sortable>
-        <template #body="{ data }"> {{ data.totalPrice.toFixed(2) }} ₽ </template>
-      </Column>
-      <Column field="discountPercent" header="Discount %" sortable></Column>
-      <Column field="warehouseName" header="Warehouse" sortable></Column>
-      <Column field="oblast" header="Region" sortable></Column>
-      <Column field="incomeID" header="Income ID" sortable></Column>
-      <Column field="odid" header="ODID" sortable></Column>
-      <Column field="nmId" header="NM ID" sortable></Column>
-      <Column field="subject" header="Subject" sortable></Column>
-      <Column field="category" header="Category" sortable></Column>
-      <Column field="brand" header="Brand" sortable></Column>
-      <Column field="isCancel" header="Is Canceled" sortable>
-        <template #body="{ data }">
-          <Tag
-            :value="data.isCancel ? 'Yes' : 'No'"
-            :severity="data.isCancel ? 'danger' : 'success'"
-          />
-        </template>
-      </Column>
-      <Column field="cancel_dt" header="Cancel Date" sortable>
-        <template #body="{ data }">
-          {{ data.cancel_dt ? formatDate(data.cancel_dt) : '-' }}
-        </template>
-      </Column>
-      <Column field="gNumber" header="G Number" sortable></Column>
-      <Column field="sticker" header="Sticker" sortable></Column>
-      <Column field="srid" header="SR ID" sortable></Column>
 
-      <template #empty> No records found </template>
-      <template #loading> Loading data. Please wait. </template>
+      <template #empty>
+        <div class>Данные не найдены</div>
+      </template>
+
+      <template #loading>
+        <div>Загрузка данных...</div>
+      </template>
     </DataTable>
   </div>
 </template>
 
 <script setup lang="ts">
-interface Order {
-  date: string
-  lastChangeDate: string
-  supplierArticle: string
-  techSize: string
-  barcode: string
-  totalPrice: number
-  discountPercent: number
-  warehouseName: string
-  oblast: string
-  incomeID: number
-  odid: number
-  nmId: number
-  subject: string
-  category: string
-  brand: string
-  isCancel: boolean
-  cancel_dt: string | null
-  gNumber: string
-  sticker: string
-  srid: string
-}
-
 import { ref, onMounted } from 'vue'
-import axios from 'axios'
 import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
 import InputText from 'primevue/inputtext'
-import Tag from 'primevue/tag'
+import Button from 'primevue/button'
+import { useSalesStore } from '@/stores/salesStore'
+import { storeToRefs } from 'pinia'
+import type { DataTablePageEvent } from 'primevue/datatable'
+import type { TableColumn } from '@/types/salesTable'
 
-const orders = ref<Order[]>([])
-const loading = ref(true)
-const filters = ref({
-  global: { value: null, matchMode: 'contains' },
-})
+const title = ref('Продажи')
+const columns = ref<TableColumn[]>([])
 
-const fetchOrders = async () => {
-  try {
-    loading.value = true
-    const response = await axios.get('http://109.73.206.144:6969/api/v1/orders', {
-      headers: {
-        Authorization: 'E6kUTYrYwZq2tN4QEtyzsbEBk3ie',
-      },
-    })
-    orders.value = response.data
-  } catch (error) {
-    console.error('Error fetching orders:', error)
-  } finally {
-    loading.value = false
-  }
+const salesStore = useSalesStore()
+const { sales, loading, pagination } = storeToRefs(salesStore)
+
+const onPageChange = (event: DataTablePageEvent) => {
+  salesStore.setPage(event.page + 1)
 }
 
-const formatDate = (dateString: string | null | undefined): string => {
-  if (!dateString) return '-'
-  const date = new Date(dateString)
-  return isNaN(date.getTime()) ? '-' : date.toLocaleDateString()
+const refreshData = () => {
+  salesStore.refreshData()
+}
+
+const onLimitChange = (event: { value: number }) => {
+  salesStore.setLimit(event.value)
 }
 
 onMounted(() => {
-  fetchOrders()
+  salesStore.fetchData()
 })
 </script>
 
-<style scoped>
-.card {
-  padding: 2rem;
-  margin: 1rem;
-  border-radius: 12px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-}
-</style>
+<style scoped></style>
