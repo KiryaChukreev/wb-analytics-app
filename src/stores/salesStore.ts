@@ -10,11 +10,12 @@ export const useSalesStore = defineStore('sales', {
     filters: {
       dateFrom: null,
       dateTo: null,
+      dateRange: null,
       columnFilters: {},
     },
     pagination: {
       currentPage: 1,
-      limit: 10,
+      limit: 500,
       totalItems: 0,
       totalPages: 0,
     },
@@ -73,6 +74,7 @@ export const useSalesStore = defineStore('sales', {
     resetDateFilters() {
       this.filters.dateFrom = null
       this.filters.dateTo = null
+      this.filters.dateRange = null
     },
 
     setPage(page: number) {

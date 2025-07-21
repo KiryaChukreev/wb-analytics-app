@@ -14,12 +14,7 @@
       />
     </div>
 
-    <Button
-      label="Сбросить"
-      @click="resetDates"
-      class="p-button-outlined"
-      :disabled="!dateRange || dateRange.length === 0"
-    />
+    <Button label="Сбросить" @click="resetDates" :disabled="!dateRange || dateRange.length === 0" />
   </div>
 </template>
 <script setup lang="ts">
@@ -32,7 +27,7 @@ import { debounce } from 'lodash-es'
 
 const salesStore = useSalesStore()
 const maxDate = ref(new Date())
-const dateRange = ref<Date[]>([])
+const dateRange = ref<Date[] | null>(null)
 const formatDate = (date: Date) => format(date, 'y-MM-dd')
 
 const handleDateChange = debounce(() => {
@@ -52,7 +47,7 @@ const handleDateChange = debounce(() => {
 }, 300)
 
 const resetDates = () => {
-  dateRange.value = []
+  dateRange.value = null
   salesStore.resetDateFilters() // внутри уже есть fetchData
 }
 </script>

@@ -1,12 +1,12 @@
 <template>
   <div id="app">
-    <router-link to="/sales">Продажи</router-link>
+    <MenuBar />
     <router-view />
   </div>
 </template>
 
 <script setup lang="ts">
-// Здесь можно добавить глобальные импорты или логику
+import MenuBar from '@/components/MenuBar.vue'
 </script>
 
 <style></style>
