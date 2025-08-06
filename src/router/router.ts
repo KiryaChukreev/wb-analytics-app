@@ -6,11 +6,15 @@ import IncomesPage from '@/pages/IncomesPage.vue'
 
 const routes = [
   {
+    path: '/',
+    redirect: '/sales',
+  },
+  {
     path: '/incomes',
     name: 'Доходы',
     component: IncomesPage,
     meta: {
-      icon: 'pi pi-chart-line', // Иконка для меню
+      // Иконка для меню
       showInMenu: true, // Показывать ли в меню
     },
   },
@@ -19,7 +23,7 @@ const routes = [
     name: 'Заказы',
     component: OrdersPage,
     meta: {
-      icon: 'pi pi-chart-line', // Иконка для меню
+      // Иконка для меню
       showInMenu: true, // Показывать ли в меню
     },
   },
@@ -28,7 +32,7 @@ const routes = [
     name: 'Продажи',
     component: SalesPage,
     meta: {
-      icon: 'pi pi-chart-line', // Иконка для меню
+      // Иконка для меню
       showInMenu: true, // Показывать ли в меню
     },
   },
@@ -37,7 +41,7 @@ const routes = [
     name: 'Склады',
     component: StocksPage,
     meta: {
-      icon: 'pi pi-chart-line', // Иконка для меню
+      // Иконка для меню
       showInMenu: true, // Показывать ли в меню
     },
   },

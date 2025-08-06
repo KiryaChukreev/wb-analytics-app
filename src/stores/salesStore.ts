@@ -1,100 +1,105 @@
+import axios from 'axios'
 import { defineStore } from 'pinia'
-import { fetchSales } from '@/api/apiSales'
-import type { TableState } from '@/types/salesTable'
+import { ref, reactive, watch } from 'vue'
+import type { SaleItem } from '@/types/types'
 
-export const useSalesStore = defineStore('sales', {
-  state: (): TableState => ({
-    sales: [],
-    loading: false,
-    error: null,
-    filters: {
-      dateFrom: null,
-      dateTo: null,
-      dateRange: null,
-      columnFilters: {},
-    },
-    pagination: {
-      currentPage: 1,
-      limit: 500,
-      totalItems: 0,
-      totalPages: 0,
-    },
-  }),
+export const useSalesStore = defineStore('salesStore', () => {
+  // Состояние
+  const LOCAL_STORAGE_KEY = 'salesData'
 
-  getters: {},
-  actions: {
-    async fetchData() {
-      if (this.loading) return
+  const salesItems = ref<SaleItem[] | null>(loadFromStorage())
+  const isLoading = ref(false)
+  const error = ref<Error | null>(null)
+  const pagination = ref({
+    currentPage: 1,
+    totalPages: 1,
+    totalItems: 0,
+    perPage: 500,
+  })
+  const dateFilters = reactive({
+    dateFrom: null as string | null,
+    dateTo: null as string | null,
+  })
 
-      try {
-        this.loading = true
-        this.error = null
+  const API_URL = 'http://109.73.206.144:6969/api/sales'
+  const API_KEY = 'E6kUTYrYwZq2tN4QEtyzsbEBk3ie'
 
-        const params = {
-          ...this.filters,
-          page: this.pagination.currentPage,
-          limit: this.pagination.limit,
-        }
-        if (params.dateFrom && params.dateTo && params.dateFrom > params.dateTo) {
-          this.error = 'Некорректный диапазон дат'
-          return
-        }
-        if (!this.filters.dateFrom || !this.filters.dateTo) {
-          this.error = 'Необходимо указать обе даты'
-          return
-        }
-        const response = await fetchSales(params)
+  function loadFromStorage() {
+    try {
+      const storedData = localStorage.getItem(LOCAL_STORAGE_KEY)
+      return storedData ? JSON.parse(storedData) : null
+    } catch (e) {
+      console.error('Ошибка чтения из localStorage:', e)
+      return null
+    }
+  }
+  function saveToStorage(data: SaleItem[]) {
+    try {
+      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(data))
+    } catch (e) {
+      console.error('Ошибка сохранения в localStorage:', e)
+    }
+  }
 
-        this.pagination.totalItems = response.total
-        this.sales = response.data
-        this.pagination.totalPages = Math.ceil(response.total / this.pagination.limit)
-      } catch (error) {
-        this.error = 'Не удалось загрузить данные'
-        console.error(error)
-      } finally {
-        this.loading = false
+  watch(
+    salesItems,
+    (newValue) => {
+      if (newValue) {
+        saveToStorage(newValue)
       }
     },
+    { deep: true },
+  )
 
-    setFilters({ dateFrom, dateTo }: { dateFrom?: string | null; dateTo?: string | null }) {
-      this.filters.dateFrom = dateFrom
-      this.filters.dateTo = dateTo
-      this.fetchData()
-    },
+  const fetchSales = async () => {
+    try {
+      isLoading.value = true
+      error.value = null
 
-    async refreshData() {
-      this.pagination.currentPage = 1
-      this.pagination.limit = 10
-
-      this.resetDateFilters()
-
-      await this.fetchData()
-    },
-
-    resetDateFilters() {
-      this.filters.dateFrom = null
-      this.filters.dateTo = null
-      this.filters.dateRange = null
-    },
-
-    setPage(page: number) {
-      if (page > 0 && page <= this.pagination.totalPages) {
-        this.pagination.currentPage = page
-        this.fetchData()
+      const params = {
+        dateFrom: dateFilters.dateFrom, // Передаем конкретные значения
+        dateTo: dateFilters.dateTo,
+        page: pagination.value.currentPage,
+        key: API_KEY,
+        limit: pagination.value.perPage,
       }
-    },
-    setLimit(limit: number) {
-      this.pagination.limit = limit
-      this.setPage(1)
-    },
-    setColumnFilter(field: string, value: string) {
-      this.filters.columnFilters[field] = value
-      this.fetchData()
-    },
+      const response = await axios.get(API_URL, { params })
+      salesItems.value = response.data.data
+      saveToStorage(response.data.data)
 
-    clearColumnFilters() {
-      this.filters.columnFilters = {}
-      this.fetchData()
-    },
-  },
+      if (response.data.meta) {
+        pagination.value = {
+          currentPage: response.data.meta.current_page,
+          totalPages: response.data.meta.last_page,
+          perPage: parseInt(response.data.meta.per_page),
+          totalItems: response.data.meta.total,
+        }
+      }
+
+      return response.data.data
+    } catch (err) {
+      console.error('Ошибка при загрузке данных:', err)
+      if (!salesItems.value) {
+        salesItems.value = loadFromStorage()
+      }
+      throw err // Пробрасываем для обработки в компоненте
+    } finally {
+      isLoading.value = false
+    }
+  }
+
+  const clearStorage = () => {
+    localStorage.removeItem(LOCAL_STORAGE_KEY)
+    salesItems.value = null
+  }
+
+  return {
+    salesItems,
+    dateFilters,
+    isLoading,
+    error,
+    pagination,
+    clearStorage,
+    fetchSales,
+  }
 })
